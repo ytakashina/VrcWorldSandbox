@@ -22,17 +22,17 @@ namespace VRCSDK2
 		{
 			myTarget.isRoomPlayerMods = EditorGUILayout.Toggle("isRoomPlayerMods", myTarget.isRoomPlayerMods);
 			
-			List<VRC.SDKBase.VRCPlayerMod> playerMods = myTarget.playerMods;
+			List<VRCSDK2.VRCPlayerMod> playerMods = myTarget.playerMods;
 			for(int i=0; i<playerMods.Count; ++i)
 			{
-                VRC.SDKBase.VRCPlayerMod mod = playerMods[i];
+				VRCSDK2.VRCPlayerMod mod = playerMods[i];
 				EditorGUILayout.BeginVertical("box");
 				EditorGUILayout.LabelField(mod.name, EditorStyles.boldLabel);
 				if( mod.allowNameEdit )
 					mod.name = EditorGUILayout.TextField( "Mod Name: ", mod.name );
 				for(int j=0; j<mod.properties.Count; ++j)
 				{
-                    VRC.SDKBase.VRCPlayerModProperty prop = mod.properties[j];
+					VRCSDK2.VRCPlayerModProperty prop = mod.properties[j];
 					myTarget.playerMods[i].properties[j] = DrawFieldForProp(prop);
 				}
 				if(GUILayout.Button ("Remove Mod"))
@@ -49,7 +49,7 @@ namespace VRCSDK2
 			}
 		}
 
-        VRC.SDKBase.VRCPlayerModProperty DrawFieldForProp(VRC.SDKBase.VRCPlayerModProperty property)
+		VRCSDK2.VRCPlayerModProperty DrawFieldForProp(VRCSDK2.VRCPlayerModProperty property)
 		{
 			if(property.type.SystemType == typeof(int))
 			{
@@ -88,11 +88,11 @@ namespace VRCSDK2
 				property.broadcastValue = (VRCSDK2.VRC_EventHandler.VrcBroadcastType) EditorGUILayout.EnumPopup( property.broadcastValue );
 				EditorGUILayout.EndHorizontal();
 			}
-			else if(property.type.SystemType == typeof(VRC.SDKBase.VRCPlayerModFactory.HealthOnDeathAction))
+			else if(property.type.SystemType == typeof(VRCSDK2.VRCPlayerModFactory.HealthOnDeathAction))
 			{
 				EditorGUILayout.BeginHorizontal();
 				EditorGUILayout.LabelField( property.name );
-				property.onDeathActionValue = (VRC.SDKBase.VRCPlayerModFactory.HealthOnDeathAction) EditorGUILayout.EnumPopup( property.onDeathActionValue);
+				property.onDeathActionValue = (VRCSDK2.VRCPlayerModFactory.HealthOnDeathAction) EditorGUILayout.EnumPopup( property.onDeathActionValue);
 				EditorGUILayout.EndHorizontal();
 			}
 			else if(property.type.SystemType == typeof(RuntimeAnimatorController))

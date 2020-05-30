@@ -54,6 +54,8 @@ namespace VRC.Udon
         [PublicAPI]
         public bool HasInteractiveEvents { get; private set; } = false;
 
+        public override bool IsInteractive => HasInteractiveEvents;
+
         [HideInInspector]
         public int NetworkID { get; set; }
 
@@ -1580,7 +1582,7 @@ namespace VRC.Udon
 
         private readonly List<uint> _onDropPoints = new List<uint>();
 
-        public void OnDrop()
+        public override void OnDrop()
         {
             if(!_hasDoneStart)
             {
@@ -1610,7 +1612,7 @@ namespace VRC.Udon
 
         private readonly List<uint> _onPickupPoints = new List<uint>();
 
-        public void OnPickup()
+        public override void OnPickup()
         {
             if(!_hasDoneStart)
             {
@@ -1625,7 +1627,7 @@ namespace VRC.Udon
 
         private readonly List<uint> _onPickupUseDownPoints = new List<uint>();
 
-        public void OnPickupUseDown()
+        public override void OnPickupUseDown()
         {
             if(!_hasDoneStart)
             {
@@ -1640,7 +1642,7 @@ namespace VRC.Udon
 
         private readonly List<uint> _onPickupUseUpPoints = new List<uint>();
 
-        public void OnPickupUseUp()
+        public override void OnPickupUseUp()
         {
             if(!_hasDoneStart)
             {

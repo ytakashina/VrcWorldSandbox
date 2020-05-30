@@ -264,8 +264,7 @@ namespace VRCSDK2.Validation
             "UnityEngine.TargetJoint2D",
             "UnityEngine.WheelJoint2D",
             "UnityEngine.Joint2D",
-            "UnityEngine.ParticleSystemForceField",
-            "VirtualMarketplaceItem",
+            "UnityEngine.ParticleSystemForceField"
         };
 
         static readonly string[] ComponentTypeWhiteListSdk2 = new string[]
@@ -408,7 +407,8 @@ namespace VRCSDK2.Validation
             "UnityStandardAssets.Vehicles.Car.Suspension",
             "UnityStandardAssets.Vehicles.Car.WheelEffects",
             "AlphaButtonClickMask",
-            "EventSystemChecker"
+            "EventSystemChecker",
+            "VirtualMarketplaceItem"
         };
 
         static readonly string[] ComponentTypeWhiteListSdk3 = new string[]

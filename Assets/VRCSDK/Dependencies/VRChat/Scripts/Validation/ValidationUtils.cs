@@ -14,12 +14,12 @@ namespace VRCSDK2.Validation
             {
                 if(component == null)
                 {
-                    return;
+                    continue;
                 }
                 
                 if (onlySceneObjects && component.GetInstanceID() < 0)
                 {
-                    return;
+                    continue;
                 }
 
                 if (logStripping)
