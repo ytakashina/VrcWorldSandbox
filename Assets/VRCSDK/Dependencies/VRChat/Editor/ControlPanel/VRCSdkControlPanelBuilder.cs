@@ -986,13 +986,15 @@ public partial class VRCSdkControlPanel : EditorWindow
                     null);
         }
 
+#if VRC_SDK_VRCSDK2
         foreach (VRC.SDKBase.VRC_DataStorage ds in GameObject.FindObjectsOfType<VRC.SDKBase.VRC_DataStorage>())
         {
-            VRC.SDKBase.VRC_ObjectSync os = ds.GetComponent<VRC.SDKBase.VRC_ObjectSync>();
+            VRCSDK2.VRC_ObjectSync os = ds.GetComponent<VRCSDK2.VRC_ObjectSync>();
             if (os != null && os.SynchronizePhysics)
                 OnGUIWarning(scene, ds.name + " has a VRC_DataStorage and VRC_ObjectSync, with SynchronizePhysics enabled.",
                     delegate { Selection.activeObject = os.gameObject; }, null);
         }
+#endif
 
         string vrcFilePath = WWW.UnEscapeURL(UnityEditor.EditorPrefs.GetString("lastVRCPath"));
         int fileSize = 0;
@@ -1025,40 +1027,49 @@ public partial class VRCSdkControlPanel : EditorWindow
                     Transform t = go.transform.parent.GetChild(idx);
                     if (t == go.transform)
                         continue;
-                    else if (t.name == go.transform.name
-                            && !(t.GetComponent<VRC.SDKBase.VRC_ObjectSync>()
-                                || t.GetComponent<VRC.SDKBase.VRC_SyncAnimation>()
-                                || t.GetComponent<VRC.SDKBase.VRC_SyncVideoPlayer>()
-                                || t.GetComponent<VRC.SDKBase.VRC_SyncVideoStream>()))
+                    else
                     {
-                        string path = t.name;
-                        Transform p = t.parent;
-                        while (p != null)
-                        {
-                            path = p.name + "/" + path;
-                            p = p.parent;
-                        }
+                        #if VRC_SDK_VRCSDK2
+                            bool allowedType = (t.GetComponent<VRCSDK2.VRC_ObjectSync>()
+                                || t.GetComponent<VRCSDK2.VRC_SyncAnimation>()
+                                || t.GetComponent<VRC.SDKBase.VRC_SyncVideoPlayer>()
+                                || t.GetComponent<VRC.SDKBase.VRC_SyncVideoStream>());
+                        #else
+                            bool allowedType = false;
+                        #endif
 
-                        OnGUIWarning(scene, "Sibling objects share the same path, which may break network events: " + path,
-                            delegate
+
+                        if (t.name == go.transform.name && !allowedType)
+                        {
+                            string path = t.name;
+                            Transform p = t.parent;
+                            while (p != null)
                             {
-                                List<GameObject> gos = new List<GameObject>();
-                                for (int c = 0; c < go.transform.parent.childCount; ++c)
-                                    if (go.transform.parent.GetChild(c).name == go.name)
-                                        gos.Add(go.transform.parent.GetChild(c).gameObject);
-                                Selection.objects = gos.ToArray();
-                            },
-                            delegate
-                            {
-                                List<GameObject> gos = new List<GameObject>();
-                                for (int c = 0; c < go.transform.parent.childCount; ++c)
-                                    if (go.transform.parent.GetChild(c).name == go.name)
-                                        gos.Add(go.transform.parent.GetChild(c).gameObject);
-                                Selection.objects = gos.ToArray();
-                                for (int i = 0; i < gos.Count; ++i)
-                                    gos[i].name = gos[i].name + "-" + i.ToString("00");
-                            });
-                        break;
+                                path = p.name + "/" + path;
+                                p = p.parent;
+                            }
+
+                            OnGUIWarning(scene, "Sibling objects share the same path, which may break network events: " + path,
+                                delegate
+                                {
+                                    List<GameObject> gos = new List<GameObject>();
+                                    for (int c = 0; c < go.transform.parent.childCount; ++c)
+                                        if (go.transform.parent.GetChild(c).name == go.name)
+                                            gos.Add(go.transform.parent.GetChild(c).gameObject);
+                                    Selection.objects = gos.ToArray();
+                                },
+                                delegate
+                                {
+                                    List<GameObject> gos = new List<GameObject>();
+                                    for (int c = 0; c < go.transform.parent.childCount; ++c)
+                                        if (go.transform.parent.GetChild(c).name == go.name)
+                                            gos.Add(go.transform.parent.GetChild(c).gameObject);
+                                    Selection.objects = gos.ToArray();
+                                    for (int i = 0; i < gos.Count; ++i)
+                                        gos[i].name = gos[i].name + "-" + i.ToString("00");
+                                });
+                            break;
+                        }
                     }
                 }
             }
@@ -1205,12 +1216,81 @@ public partial class VRCSdkControlPanel : EditorWindow
 
         return mandatoryExpand;
     }
+    
+    void DrawContentInfoForWorld(VRC.Core.ApiWorld w)
+    {
+        DrawContentInfo(w.name, w.version.ToString(), w.description, w.capacity.ToString(), w.releaseStatus, w.tags);
+    }
+
+    void DrawContentInfoForAvatar(VRC.Core.ApiAvatar a)
+    {
+        DrawContentInfo(a.name, a.version.ToString(), a.description, null, a.releaseStatus, a.tags);
+    }
+
+    void DrawContentInfo(string name, string version, string description, string capacity, string releaseStatus, List<string> tags)
+    {
+        EditorGUILayout.LabelField("Name: " + name);
+        EditorGUILayout.LabelField("Version: " + version.ToString());
+        EditorGUILayout.LabelField("Description: " + description);
+        if (capacity != null)
+            EditorGUILayout.LabelField("Capacity: " + capacity);
+        EditorGUILayout.LabelField("Release: " + releaseStatus);
+        if (tags != null)
+        {
+            string tagString = "";
+            for (int i = 0; i < tags.Count; i++)
+            {
+                if (i != 0) tagString += ", ";
+                tagString += tags[i];
+            }
+            EditorGUILayout.LabelField("Tags: " + tagString);
+
+        }
+    }
+    void DrawContentPlatformSupport(VRC.Core.ApiModel m)
+    {
+        if (m.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.StandaloneWindows || m.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.All)
+            EditorGUILayout.LabelField("Windows Support: YES");
+        else
+            EditorGUILayout.LabelField("Windows Support: NO");
+
+        if (m.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.Android || m.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.All)
+            EditorGUILayout.LabelField("Android Support: YES");
+        else
+            EditorGUILayout.LabelField("Android Support: NO");
+    }
+
+    void DrawBuildTargetSwitcher()
+    {
+        EditorGUILayout.LabelField("Active Build Target: " + EditorUserBuildSettings.activeBuildTarget.ToString());
+        if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows || EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows64 && GUILayout.Button("Switch Build Target to Android"))
+        {
+            if (UnityEditor.EditorUtility.DisplayDialog("Build Target Switcher", "Are you sure you want to switch your build target to Android? This could take a while.", "Confirm", "Cancel"))
+                EditorUserBuildSettings.SwitchActiveBuildTargetAsync(BuildTargetGroup.Android, BuildTarget.Android);
+        }
+        if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android && GUILayout.Button("Switch Build Target to Windows"))
+        {
+            if (UnityEditor.EditorUtility.DisplayDialog("Build Target Switcher", "Are you sure you want to switch your build target to Windows? This could take a while.", "Confirm", "Cancel"))
+                EditorUserBuildSettings.SwitchActiveBuildTargetAsync(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64);
+        }
+    }
+
+    string GetBuildAndPublishButtonString()
+    {
+        string buildButtonString = "Build & Publish for UNSUPPORTED";
+        if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows || EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows64)
+            buildButtonString = "Build & Publish for Windows";
+        if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
+            buildButtonString = "Build & Publish for Android";
+
+        return buildButtonString;
+    }
 
     void OnGUIAvatarSettings(VRC.SDKBase.VRC_AvatarDescriptor avatar)
     {
         GUILayout.BeginVertical(boxGuiStyle, GUILayout.Width(SdkWindowWidth));
 
-        string name = avatar.gameObject.name;
+        string name = "Unpublished Avatar - " + avatar.gameObject.name;
         if (avatar.apiAvatar != null)
             name = (avatar.apiAvatar as VRC.Core.ApiAvatar).name;
         EditorGUILayout.Space();
@@ -1241,38 +1321,10 @@ public partial class VRCSdkControlPanel : EditorWindow
         if (avatar.apiAvatar != null)
         {
             VRC.Core.ApiAvatar a = (avatar.apiAvatar as VRC.Core.ApiAvatar);
-            EditorGUILayout.LabelField("Version: " + a.version.ToString());
-            EditorGUILayout.LabelField("Name: " + a.name);
-            GUILayout.Label(a.description, infoGuiStyle, GUILayout.Width(400));
-            EditorGUILayout.LabelField("Release: " + a.releaseStatus);
-            if (a.tags != null)
-                foreach (var t in a.tags)
-                    EditorGUILayout.LabelField("Tag: " + t);
-
-            if (a.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.Android || a.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.All)
-                EditorGUILayout.LabelField("Supports: Android");
-            if (a.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.StandaloneWindows || a.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.All)
-                EditorGUILayout.LabelField("Supports: Windows");
-
-            //w.imageUrl;
+            DrawContentInfoForAvatar(a);
+            DrawContentPlatformSupport(a);
         }
-        else
-        {
-            EditorGUILayout.LabelField("Version: " + "Unpublished");
-            EditorGUILayout.LabelField("Name: " + "");
-            GUILayout.Label("", infoGuiStyle, GUILayout.Width(400));
-            EditorGUILayout.LabelField("Release: " + "");
-            //foreach (var t in w.tags)
-            //    EditorGUILayout.LabelField("Tag: " + "");
-
-            //if (w.supportedPlatforms == ApiModel.SupportedPlatforms.Android || w.supportedPlatforms == ApiModel.SupportedPlatforms.All)
-            //    EditorGUILayout.LabelField("Supports: Android");
-            //if (w.supportedPlatforms == ApiModel.SupportedPlatforms.StandaloneWindows || w.supportedPlatforms == ApiModel.SupportedPlatforms.All)
-            //    EditorGUILayout.LabelField("Supports: Windows");
-
-            //w.imageUrl;
-        }
-
+        DrawBuildTargetSwitcher();
         GUILayout.EndVertical();
     }
 
@@ -1320,45 +1372,10 @@ public partial class VRCSdkControlPanel : EditorWindow
         if (scene.apiWorld != null)
         {
             VRC.Core.ApiWorld w = (scene.apiWorld as VRC.Core.ApiWorld);
-            EditorGUILayout.LabelField("Version: " + w.version.ToString());
-            EditorGUILayout.LabelField("Name: " + w.name);
-            GUILayout.Label(w.description, infoGuiStyle, GUILayout.Width(400));
-            EditorGUILayout.LabelField("Capacity: " + w.capacity);
-            EditorGUILayout.LabelField("Release: " + w.releaseStatus);
-            if (w.tags != null)
-                foreach (var t in w.tags)
-                    EditorGUILayout.LabelField("Tag: " + t);
-
-            if (w.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.Android || w.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.All)
-                EditorGUILayout.LabelField("Supports: Android");
-            if (w.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.StandaloneWindows || w.supportedPlatforms == VRC.Core.ApiModel.SupportedPlatforms.All)
-                EditorGUILayout.LabelField("Supports: Windows");
-
-            //w.imageUrl;
+            DrawContentInfoForWorld(w);
+            DrawContentPlatformSupport(w);
         }
-        else
-        {
-            EditorGUILayout.LabelField("Version: " + "Unpublished");
-            EditorGUILayout.LabelField("Name: " + "");
-#if UNITY_ANDROID
-            EditorGUILayout.LabelField("Platform: " + "Android");
-#else
-            EditorGUILayout.LabelField("Platform: " + "Windows");
-#endif
-
-            GUILayout.Label("", infoGuiStyle, GUILayout.Width(390));
-            EditorGUILayout.LabelField("Capacity: " + "");
-            EditorGUILayout.LabelField("Release: " + "");
-            //foreach (var t in w.tags)
-            //    EditorGUILayout.LabelField("Tag: " + "");
-
-            //if (w.supportedPlatforms == ApiModel.SupportedPlatforms.Android || w.supportedPlatforms == ApiModel.SupportedPlatforms.All)
-            //    EditorGUILayout.LabelField("Supports: Android");
-            //if (w.supportedPlatforms == ApiModel.SupportedPlatforms.StandaloneWindows || w.supportedPlatforms == ApiModel.SupportedPlatforms.All)
-            //    EditorGUILayout.LabelField("Supports: Windows");
-
-            //w.imageUrl;
-        }
+        DrawBuildTargetSwitcher();
 
 #if VRC_SDK_VRCSDK2
         if (VRC.Core.APIUser.CurrentUser.hasScriptingAccess && VRCSettings.Get().DisplayAdvancedSettings)
@@ -1525,7 +1542,7 @@ public partial class VRCSdkControlPanel : EditorWindow
             }
         }
         GUI.enabled = (GUIErrors.Count == 0 && checkedForIssues) || VRC.Core.APIUser.CurrentUser.developerType == VRC.Core.APIUser.DeveloperType.Internal;
-        if (GUILayout.Button("Build & Publish"))
+        if (GUILayout.Button(GetBuildAndPublishButtonString()))
         {
             if (VRC.Core.APIUser.CurrentUser.canPublishWorlds)
             {
@@ -2151,7 +2168,7 @@ public partial class VRCSdkControlPanel : EditorWindow
         EditorGUILayout.Space();
 
         GUI.enabled = (GUIErrors.Count == 0 && checkedForIssues) || VRC.Core.APIUser.CurrentUser.developerType == VRC.Core.APIUser.DeveloperType.Internal;
-        if (GUILayout.Button("Build & Publish"))
+        if (GUILayout.Button(GetBuildAndPublishButtonString()))
         {
             if (VRC.Core.APIUser.CurrentUser.canPublishAvatars)
             {

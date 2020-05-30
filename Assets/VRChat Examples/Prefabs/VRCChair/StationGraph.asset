@@ -46,4 +46,4 @@ MonoBehaviour:
       nodeValues:
       - unityObjectValue: {fileID: 0}
         stringValue: 
-  showAssembly: 1
+  showAssembly: 0

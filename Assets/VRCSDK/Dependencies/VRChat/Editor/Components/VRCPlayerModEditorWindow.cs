@@ -1,4 +1,5 @@
-﻿// C# example:
+﻿#if VRC_SDK_VRCSDK2
+
 using UnityEngine;
 using UnityEditor;
 
@@ -7,28 +8,30 @@ public class VRCPlayerModEditorWindow : EditorWindow {
 	public delegate void AddModCallback();
 	public static AddModCallback addModCallback;
 
-	private static VRC.SDKBase.VRC_PlayerMods myTarget;
+	private static VRCSDK2.VRC_PlayerMods myTarget;
 
-	private static VRC.SDKBase.VRCPlayerModFactory.PlayerModType type;
+	private static VRCSDK2.VRCPlayerModFactory.PlayerModType type;
 
-	public static void Init (VRC.SDKBase.VRC_PlayerMods target, AddModCallback callback) 
+	public static void Init (VRCSDK2.VRC_PlayerMods target, AddModCallback callback) 
 	{
 		// Get existing open window or if none, make a new one:
 		EditorWindow.GetWindow (typeof (VRCPlayerModEditorWindow));
 		addModCallback = callback;
 		myTarget = target;
 
-		type = VRC.SDKBase.VRCPlayerModFactory.PlayerModType.Jump;
+		type = VRCSDK2.VRCPlayerModFactory.PlayerModType.Jump;
 	}
 	
 	void OnGUI ()
 	{
-		type = (VRC.SDKBase.VRCPlayerModFactory.PlayerModType)EditorGUILayout.EnumPopup("Mods", type);
+		type = (VRCSDK2.VRCPlayerModFactory.PlayerModType)EditorGUILayout.EnumPopup("Mods", type);
 		if(GUILayout.Button("Add Mod"))
 		{
-            VRC.SDKBase.VRCPlayerMod mod = VRC.SDKBase.VRCPlayerModFactory.Create(type);
+			VRCSDK2.VRCPlayerMod mod = VRCSDK2.VRCPlayerModFactory.Create(type);
 			myTarget.AddMod(mod);
 			addModCallback();
 		}
 	}
 }
+
+#endif

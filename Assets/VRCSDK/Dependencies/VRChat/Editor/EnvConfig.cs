@@ -681,7 +681,7 @@ public class EnvConfig
     public static void SetActiveSDKDefines()
     {
         bool definesChanged = false;
-        BuildTargetGroup buildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+        BuildTargetGroup buildTargetGroup = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
         List<string> defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup).Split(';').ToList();
 
         Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
